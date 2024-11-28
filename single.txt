@@ -1,0 +1,184 @@
+import { Link } from "react-router-dom";
+import Image from "../components/Image";
+import { format } from "timeago.js";
+import { useThemeContext } from "../context/ThemeStyle";
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { solarizedlight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useState } from "react";
+import Comments from "../components/Comments";
+
+const postData = {
+  title: "Understanding Node.js Streams in Depth",
+  user: {
+    username: "john_doe",
+    img: "/postImg.jpeg",
+  },
+  category: "Node.js",
+  desc: "This article will delve deep into the core concepts of Node.js streams, including readable, writable, and transform streams...",
+  createdAt: "2024-11-25T12:30:00Z",
+  img: "/postImg.jpeg",
+  _id: "1234567890",
+};
+
+const CodeBlock = ({ code, codeBgColor, bgColor, textColor }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+  };
+  const customStyle = {
+    backgroundColor: codeBgColor,
+    ShadowRoot: "0px 6px 18px rgba(0, 0, 0, 0.6)",
+  };
+  return (
+    <div className={`${codeBgColor} relative p-4 rounded-lg`}>
+      <CopyToClipboard text={code} onCopy={handleCopy}>
+        <button
+          className={`absolute right-4 hover:opacity-70 border border-gray-500 top-4  px-3 py-1 rounded ${bgColor} ${textColor}`}
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </CopyToClipboard>
+      <SyntaxHighlighter
+        language="javascript"
+        style={solarizedlight}
+        className="rounded-lg"
+        customStyle={customStyle}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  );
+};
+
+const SinglePostPage = () => {
+  const data = postData;
+  const { textColor, subtitleColor, dateColor, codeBgColor, bgColor } =
+    useThemeContext();
+
+  return (
+    <div className={`${textColor} container mx-auto px-4 py-8`}>
+      {/* Post Details */}
+      <div className="flex gap-8">
+        <div className="lg:w-3/5 flex flex-col gap-8">
+          <h1
+            className={`${subtitleColor} text-xl md:text-3xl xl:text-4xl font-semibold`}
+          >
+            {data.title}
+          </h1>
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <span>Written by</span>
+            <Link className="text-blue-800">{data.user.username}</Link>
+            <span>on</span>
+            <Link className={`${dateColor}`}>{data.category}</Link>
+            <span>{format(data.createdAt)}</span>
+          </div>
+          <p className="text-gray-500 font-medium">{data.desc}</p>
+        </div>
+        {data.img && (
+          <div className="hidden lg:block w-2/5">
+            <Image src={data.img} w="600" className="rounded-2xl" />
+          </div>
+        )}
+      </div>
+
+      {/* Post Content */}
+      <div className="flex flex-col md:flex-row gap-12 justify-between">
+        <div className="lg:text-lg flex flex-col gap-6 text-justify">
+          <p>
+            In Node.js, streams are an essential feature for handling large
+            amounts of data efficiently. Streams allow you to read or write data
+            piece by piece, instead of loading everything into memory at once...
+          </p>
+          <h2 className="text-lg font-semibold mt-6">
+            Readable Stream Example
+          </h2>
+          <CodeBlock
+            code={`const fs = require('fs');
+const readableStream = fs.createReadStream('largeFile.txt');
+
+readableStream.on('data', (chunk) => {
+  console.log(chunk);
+});`}
+            codeBgColor={codeBgColor}
+            bgColor={bgColor}
+            textColor={textColor}
+          />
+          <h2 className="text-lg font-semibold mt-6">
+            Writable Stream Example
+          </h2>
+          <CodeBlock
+            code={`const fs = require('fs');
+const writableStream = fs.createWriteStream('output.txt');
+
+writableStream.write('Hello, Node.js Streams!\\n');
+writableStream.write('This is another line of text.');
+writableStream.end();`}
+            codeBgColor={codeBgColor}
+          />
+          <h2 className="text-lg font-semibold mt-6">
+            Transform Stream Example
+          </h2>
+          <CodeBlock
+            code={`const { Transform } = require('stream');
+const fs = require('fs');
+
+const upperCaseTransform = new Transform({
+  transform(chunk, encoding, callback) {
+    this.push(chunk.toString().toUpperCase());
+    callback();
+  }
+});
+
+const readableStream = fs.createReadStream('input.txt');
+const writableStream = fs.createWriteStream('output.txt');
+
+readableStream.pipe(upperCaseTransform).pipe(writableStream);`}
+            codeBgColor={codeBgColor}
+          />
+        </div>
+
+        {/* Sidebar */}
+        <div className="px-4 h-max sticky top-8">
+          <h1 className="mb-4 text-sm font-medium">Author</h1>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-8">
+              {data.user.img && (
+                <Image
+                  src={data.user.img}
+                  className="w-12 h-12 rounded-full object-cover"
+                  w="48"
+                  h="48"
+                />
+              )}
+              <Link className="text-blue-800">{data.user.username}</Link>
+            </div>
+            <p className="text-sm text-gray-500">
+              A passionate software engineer exploring the nuances of Node.js.
+            </p>
+          </div>
+          <h1 className="mt-8 mb-4 text-sm font-medium">Categories</h1>
+          <div className="flex flex-col gap-2 text-sm">
+            <Link className="underline">All</Link>
+            <Link className="underline" to="/">
+              Node.js
+            </Link>
+            <Link className="underline" to="/">
+              Web Development
+            </Link>
+            <Link className="underline" to="/">
+              JavaScript
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Comments Section */}
+      <Comments />
+    </div>
+  );
+};
+
+export default SinglePostPage;
